@@ -76,6 +76,8 @@
 <script setup>
 import { ref, watch, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+// Usage in your main layout component:
+import { themeEventBus } from '@/utils/themeEvent'
 import {
     Fold,
     Expand,
@@ -108,6 +110,13 @@ watch(
                 childIndex: null
             }
         }
+    },
+    () => router.currentRoute.value,
+    () => {
+        // Slight delay to ensure the DOM is updated
+        setTimeout(() => {
+            applyTheme()
+        }, 50)
     }
 )
 
@@ -151,6 +160,11 @@ onMounted(() => {
         parentIndex: 3, // 假设系统设置是第四个导航项
         childIndex: themeIndex
     }
+
+    // If user navigates directly to a route, ensure theme is applied
+    setTimeout(() => {
+        applyTheme()
+    }, 100)
 })
 
 onBeforeUnmount(() => {
@@ -234,7 +248,10 @@ const navItems = ref([
         text: '功能菜单',
         icon: Grid,
         expanded: false,
-        children: [{ text: '用户管理' }, { text: '文章管理' }],
+        children: [
+            { text: '用户管理', path: '/main/users' },
+            { text: '文章管理', path: '/main/articles' }
+        ],
         activeChild: null
     },
     {
@@ -276,7 +293,8 @@ const toggleExpand = (item, index) => {
 }
 
 // 更新后的子项点击处理
-const handleChildClick = (parentIdx, childIdx) => {
+const handleChildClick = (parentIdx, childIdx, event) => {
+    if (event) event.stopPropagation()
     // 新增主题判断逻辑（假设系统设置是navItems的第三个元素）
     if (parentIdx === 3) {
         // 获取主题模式
@@ -290,6 +308,9 @@ const handleChildClick = (parentIdx, childIdx) => {
         currentTheme.value = theme
         localStorage.setItem('theme', theme)
         applyTheme()
+
+        // Emit theme change event for other components
+        themeEventBus.emit('themeChanged', theme)
 
         // 设置激活状态
         activationState.activeParent = parentIdx
@@ -305,7 +326,14 @@ const handleChildClick = (parentIdx, childIdx) => {
         parentIndex: parentIdx,
         childIndex: childIdx
     }
-    event.stopPropagation()
+    // Add navigation logic for submenu items
+    const parent = navItems.value[parentIdx]
+    const child = parent.children[childIdx]
+
+    // Check if child has a path property and navigate
+    if (child.path) {
+        router.push(child.path)
+    }
 }
 
 // 新增主题相关状态和方法
@@ -313,15 +341,72 @@ const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
 const applyTheme = () => {
     const root = document.documentElement
-    // if (currentTheme.value === 'dark') {
-    //     root.style.setProperty('--bg-color', '#ffffff')
-    //     root.style.setProperty('--text-color', '#ffffff')
-    //     root.style.setProperty('--nav-bg', '#7ecafe')
-    // } else {
-    //     root.style.setProperty('--bg-color', '#ffffff')
-    //     root.style.setProperty('--text-color', '#808080')
-    //     root.style.setProperty('--nav-bg', '#ffffff')
-    // }
+    if (currentTheme.value === 'dark') {
+        // Dark theme settings for navigation
+        root.style.setProperty('--nav-bg', '#1a1a1a')
+        root.style.setProperty('--nav-text', '#ffffff')
+        root.style.setProperty('--nav-hover', '#333333')
+        root.style.setProperty('--nav-active', '#2c2c2c')
+        root.style.setProperty('--nav-border', '#333333')
+        root.style.setProperty('--nav-top-bg', '#1a1a1a')
+        root.style.setProperty('--nav-icon-color', '#cccccc')
+        root.style.setProperty('--time-display-color', '#ff91b4')
+
+        // Dark theme settings for home page
+        root.style.setProperty('--home-bg', '#121212')
+        root.style.setProperty('--card-bg', '#1e1e1e')
+        root.style.setProperty('--text-primary', '#ffffff')
+        root.style.setProperty('--text-secondary', '#aaaaaa')
+        root.style.setProperty('--text-tertiary', '#888888')
+        root.style.setProperty('--border-color', '#333333')
+        root.style.setProperty('--calendar-today-bg', '#1e3a5f')
+        root.style.setProperty('--calendar-today-color', '#7ec2ff')
+        root.style.setProperty('--calendar-selected-bg', '#0f5694')
+        root.style.setProperty('--calendar-hover', '#2a2a2a')
+        root.style.setProperty('--button-hover', '#333333')
+        root.style.setProperty('--box-shadow', '0 4px 12px rgba(0, 0, 0, 0.5)')
+        root.style.setProperty('--section-title-color', '#ffffff')
+        root.style.setProperty('--section-title-border', '#0f5694')
+    } else {
+        // Light theme settings for navigation
+        root.style.setProperty('--nav-bg', '#ffffff')
+        root.style.setProperty('--nav-text', '#606266')
+        root.style.setProperty('--nav-hover', '#f5f5f5')
+        root.style.setProperty('--nav-active', '#f0f0f0')
+        root.style.setProperty('--nav-border', '#e6e6e6')
+        root.style.setProperty('--nav-top-bg', '#ffffff')
+        root.style.setProperty('--nav-icon-color', '#808080')
+        root.style.setProperty('--time-display-color', '#fb7299')
+
+        // Light theme settings for home page
+        root.style.setProperty('--home-bg', '#ffffff')
+        root.style.setProperty('--card-bg', '#ffffff')
+        root.style.setProperty('--text-primary', '#333333')
+        root.style.setProperty('--text-secondary', '#666666')
+        root.style.setProperty('--text-tertiary', '#999999')
+        root.style.setProperty('--border-color', '#e0e0e0')
+        root.style.setProperty('--calendar-today-bg', '#e6f7ff')
+        root.style.setProperty('--calendar-today-color', '#1890ff')
+        root.style.setProperty('--calendar-selected-bg', '#1890ff')
+        root.style.setProperty('--calendar-hover', '#f9f9f9')
+        root.style.setProperty('--button-hover', '#f0f0f0')
+        root.style.setProperty('--box-shadow', '0 4px 12px rgba(0, 0, 0, 0.08)')
+        root.style.setProperty('--section-title-color', '#333333')
+        root.style.setProperty('--section-title-border', '#1890ff')
+    }
+
+    // Update the folder icon color based on theme
+    const folderIcon = document.querySelector('a.folder')
+    if (folderIcon) {
+        folderIcon.style.color =
+            currentTheme.value === 'dark' ? '#cccccc' : '#808080'
+    }
+}
+
+const folderIcon = document.querySelector('a.folder')
+if (folderIcon) {
+    folderIcon.style.color =
+        currentTheme.value === 'dark' ? '#cccccc' : '#808080'
 }
 
 const resetActivation = currentParent => {
@@ -362,7 +447,7 @@ a.folder {
 }
 
 a.folder:hover {
-    background-color: #f5f5f5;
+    background-color: var(--nav-hover);
     will-change: background-color;
     transition-delay: 0.1s;
 }
@@ -397,8 +482,9 @@ a.folder .el-icon {
     height: 100vh;
     overflow-y: auto;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    padding: 60px 0 20px 0; /* 给顶部按钮留空间 */
-    background: #ffffff;
+    padding: 60px 0 20px 0;
+    background: var(--nav-bg);
+    transition: left 0.3s ease, background-color 0.3s ease;
 }
 
 .nav-left {
@@ -419,7 +505,7 @@ a.folder .el-icon {
 }
 
 .nav-item {
-    position: relative; /* 给箭头定位提供基准 */
+    position: relative;
     height: 40px;
     width: 100%;
     display: flex;
@@ -427,7 +513,7 @@ a.folder .el-icon {
     padding: 0 20px;
     cursor: pointer;
     transition: all 0.3s ease;
-    color: #606266;
+    color: var(--nav-text);
     font-size: 16px;
     font-weight: 500;
 }
@@ -436,7 +522,7 @@ a.folder .el-icon {
     position: absolute;
     right: 20px;
     transition: transform 0.3s ease;
-    color: #999;
+    color: var(--nav-icon-color);
 }
 
 .is-expanded .arrow-icon {
@@ -458,17 +544,18 @@ a.folder .el-icon {
 }
 
 .nav-item:hover {
-    background: #f5f5f5;
+    background: var(--nav-hover);
 }
 
 .nav-item.active {
-    background: #f5f5f5;
+    background: var(--nav-active);
 }
 
 .main-area {
     margin-left: 220px; /* 与导航栏宽度一致 */
     transition: margin 0.3s ease;
     flex: 1;
+    background-color: var(--nav-bg);
 }
 
 /* 折叠时主内容区域的调整 */
@@ -489,7 +576,7 @@ a.folder .el-icon {
 
 /* 同时保持父级激活状态 */
 .nav-item.active {
-    background: #f5f5f5;
+    background: var(--nav-hover);
 }
 
 /* 子菜单缩进样式 */
@@ -503,9 +590,9 @@ a.folder .el-icon {
 }
 
 .submenu-list {
-    order: 1; /* 始终在父项上方 */
+    order: 1;
     width: 100%;
-    background: #fff;
+    background: var(--nav-bg);
     border-radius: 4px;
     margin: 4px 0;
     transition: all 0.3s ease;
@@ -515,12 +602,17 @@ a.folder .el-icon {
 .submenu-list .sub-item {
     height: 40px;
     padding-left: 65px !important;
-    color: #666;
+    color: var(--nav-text);
     font-size: 16px;
 }
 
 .submenu-list .sub-item:hover {
-    background: #f0f0f0;
+    background: var(--nav-hover);
+}
+
+.nav-item.sub-item.active,
+.nav-item.sub-item.sub-active {
+    background: var(--nav-active) !important;
 }
 
 .submenu-list .sub-item:first-child {
@@ -558,7 +650,8 @@ a.folder .el-icon {
     position: absolute;
     width: 100%;
     height: 60px;
-    background-color: #fff;
+    background-color: var(--nav-top-bg);
+    transition: background-color 0.3s ease;
 }
 
 .nav-top .avatar {
@@ -572,16 +665,21 @@ a.folder .el-icon {
 
 .nav-top .time-display {
     position: absolute;
-    right: 20%; /* 根据头像位置调整 */
+    right: 20%;
     top: calc(50% + 5px);
     transform: translateY(-50%);
     font-size: 25px;
-    color: #fb7299;
+    color: var(--time-display-color);
     font-weight: 500;
-    /* background: rgba(245, 245, 245, 0.8); */
     padding: 5px 12px;
-    /* border-radius: 15px; */
-    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+}
+
+a.folder {
+    color: var(--nav-icon-color);
+}
+
+a.folder:hover {
+    background-color: var(--nav-hover);
 }
 
 /* 新增响应式样式 */

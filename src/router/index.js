@@ -34,6 +34,16 @@ const routes = [
                 path: 'profile',
                 name: 'Profile',
                 component: () => import('@/views/Profile.vue')
+            },
+            {
+                path: 'users',
+                name: 'Users',
+                component: () => import('@/views/Users.vue')
+            },
+            {
+                path: 'articles',
+                name: 'Articles',
+                component: () => import('@/views/Articles.vue')
             }
             // 其他子路由可以继续在这里添加
         ]

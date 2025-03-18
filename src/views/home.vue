@@ -91,6 +91,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { themeEventBus } from '@/utils/themeEvent'
 
 export default {
     name: 'CalendarWithDailyCard',
@@ -225,6 +226,13 @@ export default {
             return isSameDay(date, selectedDate.value)
         }
 
+        // Add theme listener
+        const applyThemeToHomePage = () => {
+            // This function will be called when theme changes
+            // Any specific DOM manipulations for the home page can be done here
+            // The CSS variables will handle most styling automatically
+        }
+
         onMounted(() => {
             // Initialize with current date
             displayDate.value = new Date()
@@ -234,11 +242,21 @@ export default {
 
             // Add event listener for window resize
             window.addEventListener('resize', checkScreenSize)
+            // Listen for theme changes
+            themeEventBus.on('themeChanged', applyThemeToHomePage)
+
+            // Apply current theme from localStorage
+            const currentTheme = localStorage.getItem('theme') || 'light'
+            if (currentTheme === 'dark') {
+                applyThemeToHomePage('dark')
+            }
         })
 
         onUnmounted(() => {
             // Remove event listener when component is unmounted
             window.removeEventListener('resize', checkScreenSize)
+            // Remove event listener
+            themeEventBus.off('themeChanged', applyThemeToHomePage)
         })
 
         return {
@@ -269,11 +287,13 @@ export default {
     max-width: 1200px;
     justify-content: center;
     margin-top: 60px;
+    background-color: var(--home-bg);
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     min-height: 100vh;
-    padding: 40px 16px; /* 增加内边距保证内容可见 */
+    padding: 40px 16px;
+    transition: background-color 0.3s ease;
 }
 
 .mobile-layout {
@@ -293,27 +313,30 @@ export default {
 .section-title {
     font-size: 20px;
     font-weight: 600;
-    color: #333;
+    color: var(--section-title-color);
     margin-bottom: 16px;
     text-align: left;
     padding-left: 4px;
-    border-left: 4px solid #1890ff;
+    border-left: 4px solid var(--section-title-border);
     padding-left: 12px;
+    transition: color 0.3s ease, border-left 0.3s ease;
 }
 
 /* Daily Card Styles */
 .daily-card {
     width: 100%;
-    max-width: 400px; /* Set a max-width for daily card */
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
+    max-width: 400px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--box-shadow);
     display: flex;
     flex-direction: column;
     margin-bottom: 16px;
     flex-shrink: 0;
+    transition: background-color 0.3s ease, border 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .mobile-layout .daily-card {
@@ -336,7 +359,8 @@ export default {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
+    transition: border-bottom 0.3s ease;
 }
 
 .card-content {
@@ -350,15 +374,17 @@ export default {
 .quote-text {
     font-size: 16px;
     line-height: 1.8;
-    color: #333;
+    color: var(--text-primary);
     text-align: center;
     margin-bottom: 16px;
+    transition: color 0.3s ease;
 }
 
 .quote-author {
     font-size: 14px;
-    color: #666;
+    color: var(--text-secondary);
     text-align: center;
+    transition: color 0.3s ease;
 }
 
 .card-footer {
@@ -366,29 +392,34 @@ export default {
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--border-color);
+    transition: border-top 0.3s ease;
 }
 
 .service-info {
     font-size: 12px;
-    color: #999;
+    color: var(--text-tertiary);
+    transition: color 0.3s ease;
 }
 
 .date-box {
     text-align: right;
     padding: 8px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color);
+    transition: border 0.3s ease;
 }
 
 .date {
     font-size: 16px;
-    color: #333;
+    color: var(--text-primary);
     font-weight: bold;
+    transition: color 0.3s ease;
 }
 
 .day {
     font-size: 14px;
-    color: #666;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
 }
 
 /* Calendar Styles */
@@ -404,13 +435,15 @@ export default {
 
 .calendar-container {
     width: 100%;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     overflow: hidden;
-    background-color: #fff;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    background-color: var(--card-bg);
+    box-shadow: var(--box-shadow);
     display: flex;
     flex-direction: column;
+    transition: background-color 0.3s ease, border 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .calendar-header {
@@ -418,12 +451,15 @@ export default {
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
+    transition: border-bottom 0.3s ease;
 }
 
 .year-month {
     font-weight: bold;
     font-size: 18px;
+    color: var(--text-primary);
+    transition: color 0.3s ease;
 }
 
 .nav-buttons {
@@ -434,14 +470,15 @@ export default {
 .nav-buttons button {
     padding: 4px 12px;
     background-color: transparent;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
+    color: var(--text-primary);
 }
 
 .nav-buttons button:hover {
-    background-color: #f0f0f0;
+    background-color: var(--button-hover);
 }
 
 .calendar-body {
@@ -454,12 +491,15 @@ export default {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     text-align: center;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
+    transition: border-bottom 0.3s ease;
 }
 
 .weekday {
     padding: 12px 0;
     font-weight: bold;
+    color: var(--text-primary);
+    transition: color 0.3s ease;
 }
 
 .days {
@@ -474,29 +514,32 @@ export default {
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    border-right: 1px solid #f0f0f0;
-    border-bottom: 1px solid #f0f0f0;
-    transition: all 0.2s;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.2s, border-right 0.3s ease, border-bottom 0.3s ease;
 }
 
 .day:hover {
-    background-color: #f9f9f9;
+    background-color: var(--calendar-hover);
 }
 
 .other-month {
-    color: #ccc;
+    color: var(--text-tertiary);
+    transition: color 0.3s ease;
 }
 
 .today {
-    background-color: #e6f7ff;
+    background-color: var(--calendar-today-bg);
     font-weight: bold;
-    color: #1890ff;
+    color: var(--calendar-today-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .selected {
-    background-color: #1890ff;
+    background-color: var(--calendar-selected-bg);
     color: white;
     font-weight: bold;
+    transition: background-color 0.3s ease;
 }
 
 /* 视频容器样式 */
@@ -504,10 +547,11 @@ export default {
     position: relative;
     width: 100%;
     height: 0;
-    padding-bottom: 56.25%; /* 16:9 比例 */
-    /* margin-top: 30px; /* 日历和视频间距 */
+    padding-bottom: 56.25%;
     border-radius: 8px;
     overflow: hidden;
+    box-shadow: var(--box-shadow);
+    transition: box-shadow 0.3s ease;
 }
 
 .video-container iframe {
@@ -516,8 +560,8 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    border: 1px solid #eee;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    transition: border 0.3s ease;
 }
 
 /* Responsive adjustments */
