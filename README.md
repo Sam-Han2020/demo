@@ -8,31 +8,31 @@
 
 起始页面：
 
-![image-20250318160106501](C:\Users\UserX\AppData\Roaming\Typora\typora-user-images\image-20250318160106501.png)
+![image-20250318160106501](ui\image-20250318160106501.png)
 
 登录界面：
 
-![image-20250318160117573](C:\Users\UserX\AppData\Roaming\Typora\typora-user-images\image-20250318160117573.png)
+![image-20250318160117573](ui\image-20250318160117573.png)
 
 注册界面：
 
-![image-20250318160128044](C:\Users\UserX\AppData\Roaming\Typora\typora-user-images\image-20250318160128044.png)
+![image-20250318160128044](ui\image-20250318160128044.png)
 
 修改密码：
 
-![image-20250318160140125](C:\Users\UserX\AppData\Roaming\Typora\typora-user-images\image-20250318160140125.png)
+![image-20250318160140125](ui\image-20250318160140125.png)
 
 首页：
 
-![image-20250318160203443](C:\Users\UserX\AppData\Roaming\Typora\typora-user-images\image-20250318160203443.png)
+![image-20250318160203443](ui\image-20250318160203443.png)
 
-![image-20250318160231075](C:\Users\UserX\AppData\Roaming\Typora\typora-user-images\image-20250318160231075.png)
+![image-20250318160231075](ui\image-20250318160231075.png)
 
 个人中心：
 
-![image-20250318160242209](C:\Users\UserX\AppData\Roaming\Typora\typora-user-images\image-20250318160242209.png)
+![image-20250318160242209](ui\image-20250318160242209.png)
 
-![image-20250318160253474](C:\Users\UserX\AppData\Roaming\Typora\typora-user-images\image-20250318160253474.png)
+![image-20250318160253474](ui\image-20250318160253474.png)
 
 ## Project setup
 
