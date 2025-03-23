@@ -65,8 +65,15 @@
         </div>
         <div class="main-area" :class="{ 'blur-effect': showMask }">
             <div class="nav-top">
+                <!-- 新增当前路径显示 -->
+                <div class="current-path">{{ currentPathDisplay }}</div>
                 <div class="time-display">{{ currentTime }}</div>
-                <img src="@/icons/avatar.png" alt="" class="avatar" />
+                <img
+                    src="@/icons/avatar.png"
+                    alt=""
+                    class="avatar"
+                    v-show="!hideAvatar"
+                />
             </div>
             <router-view></router-view>
         </div>
@@ -74,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, watch, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 // Usage in your main layout component:
 import { themeEventBus } from '@/utils/themeEvent'
@@ -93,11 +100,17 @@ import {
 
 const router = useRouter()
 const currentTime = ref('')
+const hideAvatar = ref(false)
+
+// 新增: 当前路径显示相关
+const currentPathDisplay = ref('首页')
 
 // 监听路由变化
 watch(
     () => router.currentRoute.value.path,
     newPath => {
+        // 设置是否隐藏头像
+        hideAvatar.value = newPath.startsWith('/main/profile')
         // 找到匹配的导航项索引
         const matchedIndex = navItems.value.findIndex(
             item => item.path && newPath.startsWith(item.path)
@@ -109,7 +122,29 @@ watch(
                 parentIndex: null,
                 childIndex: null
             }
+
+            // 设置当前路径显示
+            updateCurrentPathDisplay(navItems.value[matchedIndex])
         }
+
+        // 检查子菜单路径匹配
+        navItems.value.forEach((item, parentIdx) => {
+            if (item.children) {
+                const childIdx = item.children.findIndex(
+                    child => child.path && newPath.startsWith(child.path)
+                )
+                if (childIdx !== -1) {
+                    activationState.activeParent = parentIdx
+                    activationState.activeChild = {
+                        parentIndex: parentIdx,
+                        childIndex: childIdx
+                    }
+
+                    // 设置当前路径显示（包含父子结构）
+                    updateCurrentPathDisplay(item, item.children[childIdx])
+                }
+            }
+        })
     },
     () => router.currentRoute.value,
     () => {
@@ -119,6 +154,15 @@ watch(
         }, 50)
     }
 )
+
+// 新增: 更新路径显示的方法
+const updateCurrentPathDisplay = (parent, child = null) => {
+    if (child) {
+        currentPathDisplay.value = `${parent.text} > ${child.text}`
+    } else {
+        currentPathDisplay.value = parent.text
+    }
+}
 
 const updateTime = () => {
     const now = new Date()
@@ -144,6 +188,9 @@ onMounted(() => {
     activationState.activeParent = 0
     activationState.activeChild = { parentIndex: null, childIndex: null }
 
+    // 初始化当前路径显示
+    currentPathDisplay.value = navItems.value[0].text
+
     // 折叠所有其他父级菜单（与点击逻辑保持一致）
     navItems.value.forEach((navItem, idx) => {
         if (idx !== 0) navItem.expanded = false
@@ -165,7 +212,40 @@ onMounted(() => {
     setTimeout(() => {
         applyTheme()
     }, 100)
+
+    // 初始化路径显示 - 根据当前路由路径设置
+    const currentPath = router.currentRoute.value.path
+    initCurrentPathDisplay(currentPath)
 })
+
+// 新增: 初始化路径显示
+const initCurrentPathDisplay = currentPath => {
+    // 检查主菜单项匹配
+    const parentMatch = navItems.value.find(
+        item => item.path && currentPath.startsWith(item.path)
+    )
+
+    if (parentMatch) {
+        currentPathDisplay.value = parentMatch.text
+        return
+    }
+
+    // 检查子菜单项匹配
+    for (const parent of navItems.value) {
+        if (parent.children) {
+            const childMatch = parent.children.find(
+                child => child.path && currentPath.startsWith(child.path)
+            )
+            if (childMatch) {
+                currentPathDisplay.value = `${parent.text} > ${childMatch.text}`
+                return
+            }
+        }
+    }
+
+    // 默认显示首页
+    currentPathDisplay.value = '首页'
+}
 
 onBeforeUnmount(() => {
     window.removeEventListener('resize', checkScreenSize)
@@ -276,6 +356,9 @@ const toggleExpand = (item, index) => {
         router.push(item.path)
         activationState.activeParent = index
         activationState.activeChild = { parentIndex: null, childIndex: null }
+
+        // 更新路径显示
+        updateCurrentPathDisplay(item)
     } else if (item.children) {
         // 有子菜单的处理逻辑
         item.expanded = !item.expanded
@@ -318,6 +401,12 @@ const handleChildClick = (parentIdx, childIdx, event) => {
             parentIndex: parentIdx,
             childIndex: childIdx
         }
+
+        // 更新路径显示
+        const parent = navItems.value[parentIdx]
+        const child = parent.children[childIdx]
+        updateCurrentPathDisplay(parent, child)
+
         return
     }
 
@@ -329,6 +418,9 @@ const handleChildClick = (parentIdx, childIdx, event) => {
     // Add navigation logic for submenu items
     const parent = navItems.value[parentIdx]
     const child = parent.children[childIdx]
+
+    // 更新路径显示
+    updateCurrentPathDisplay(parent, child)
 
     // Check if child has a path property and navigate
     if (child.path) {
@@ -351,6 +443,7 @@ const applyTheme = () => {
         root.style.setProperty('--nav-top-bg', '#1a1a1a')
         root.style.setProperty('--nav-icon-color', '#cccccc')
         root.style.setProperty('--time-display-color', '#ff91b4')
+        root.style.setProperty('--path-display-color', '#7ec2ff') // 新增路径颜色
 
         // Dark theme settings for home page
         root.style.setProperty('--home-bg', '#121212')
@@ -377,6 +470,7 @@ const applyTheme = () => {
         root.style.setProperty('--nav-top-bg', '#ffffff')
         root.style.setProperty('--nav-icon-color', '#808080')
         root.style.setProperty('--time-display-color', '#fb7299')
+        root.style.setProperty('--path-display-color', '#1890ff') // 新增路径颜色
 
         // Light theme settings for home page
         root.style.setProperty('--home-bg', '#ffffff')
@@ -556,6 +650,7 @@ a.folder .el-icon {
     transition: margin 0.3s ease;
     flex: 1;
     background-color: var(--nav-bg);
+    overflow-x: auto;
 }
 
 /* 折叠时主内容区域的调整 */
@@ -654,6 +749,18 @@ a.folder .el-icon {
     transition: background-color 0.3s ease;
 }
 
+/* 新增当前路径显示样式 */
+.current-path {
+    position: absolute;
+    left: 10%;
+    top: calc(50% + 5px);
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--path-display-color);
+    font-weight: 500;
+    padding: 5px 12px;
+}
+
 .nav-top .avatar {
     position: absolute;
     right: 10%;
@@ -736,6 +843,12 @@ a.folder:hover {
     .nav-top .time-display {
         right: 25%;
         font-size: 20px;
+    }
+
+    /* 移动端调整路径显示位置 */
+    .current-path {
+        left: 20%;
+        font-size: 16px;
     }
 }
 </style>

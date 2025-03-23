@@ -17,3 +17,13 @@ createApp(App)
     .component('Calendar', Calendar)
     .use(router)
     .mount('#app')
+
+// 在main.ts中添加（仅抑制ResizeObserver特定错误）
+window.addEventListener(
+    'error',
+    e => {
+        if (e.message.toLowerCase().includes('resizeobserver'))
+            e.preventDefault()
+    },
+    { capture: true }
+)
