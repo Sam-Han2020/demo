@@ -1,7 +1,7 @@
 <template>
     <div class="user-management-container">
         <div class="user-management-header">
-            <h2>用户管理列表</h2>
+            <h2 class="section-title">用户管理列表</h2>
         </div>
 
         <div class="table-operations">
@@ -406,11 +406,16 @@ const handleCurrentChange = val => {
     text-align: center;
 }
 
-.user-management-header h2 {
-    color: var(--text-primary);
-    font-weight: 500;
-    font-size: 22px;
-    margin: 0;
+.section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--section-title-color);
+    margin-bottom: 16px;
+    text-align: left;
+    padding-left: 4px;
+    border-left: 4px solid var(--section-title-border);
+    padding-left: 12px;
+    transition: color 0.3s ease, border-left 0.3s ease;
 }
 
 .table-operations {
@@ -717,6 +722,11 @@ const handleCurrentChange = val => {
     :deep(.el-button) {
         height: 30px;
         font-size: 14px;
+    }
+
+    .section-title {
+        text-align: center;
+        border: none;
     }
 }
 </style>

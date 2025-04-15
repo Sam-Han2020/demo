@@ -102,7 +102,7 @@
                     <div class="label1">Username:</div>
                     <el-form-item>
                         <el-input
-                            v-model="username"
+                            v-model="username1"
                             type="text"
                             placeholder="用户名"
                             :suffix-icon="User"
@@ -111,7 +111,7 @@
                     <div class="label1">Password:</div>
                     <el-form-item>
                         <el-input
-                            v-model="password"
+                            v-model="password1"
                             type="password"
                             placeholder="密码"
                             :suffix-icon="Lock"
@@ -257,6 +257,8 @@ export default {
             // 新增input绑定字段
             username: '',
             password: '',
+            username1: '',
+            password1: '',
             confirmPassword: '',
             value1: null, // 日期选择器绑定字段
             currentTime: null,

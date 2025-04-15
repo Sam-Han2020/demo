@@ -6,6 +6,7 @@ import App from './App.vue'
 import router from './router'
 import PrimeVue from 'primevue/config'
 import Calendar from 'primevue/calendar'
+import axios from 'axios'
 
 const app = createApp(App)
 
@@ -15,6 +16,7 @@ createApp(App)
     .use(ElementPlus)
     .use(PrimeVue, { ripple: true })
     .component('Calendar', Calendar)
+    .use(axios)
     .use(router)
     .mount('#app')
 

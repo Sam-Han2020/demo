@@ -65,8 +65,23 @@
         </div>
         <div class="main-area" :class="{ 'blur-effect': showMask }">
             <div class="nav-top">
-                <!-- 新增当前路径显示 -->
-                <div class="current-path">{{ currentPathDisplay }}</div>
+                <!-- 修改当前路径显示 - 添加v-if条件和点击事件 -->
+                <div
+                    v-if="!isPathHidden && !isThemePath"
+                    class="current-path"
+                    @click="handlePathClick"
+                >
+                    <!-- 替换 > 为 ArrowRight 图标 -->
+                    <span v-for="(part, idx) in pathParts" :key="idx">
+                        {{ part }}
+                        <el-icon
+                            v-if="idx < pathParts.length - 1"
+                            class="path-arrow"
+                        >
+                            <ArrowRightBold /> &nbsp;
+                        </el-icon>
+                    </span>
+                </div>
                 <div class="time-display">{{ currentTime }}</div>
                 <img
                     src="@/icons/avatar.png"
@@ -95,7 +110,8 @@ import {
     ArrowUp,
     ArrowDown,
     Sunny,
-    Moon // 新增箭头图标
+    Moon,
+    ArrowRightBold
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -104,6 +120,50 @@ const hideAvatar = ref(false)
 
 // 新增: 当前路径显示相关
 const currentPathDisplay = ref('首页')
+
+// 计算路径部分用于显示
+const pathParts = computed(() => {
+    return currentPathDisplay.value.split(' > ')
+})
+
+// 新增: 控制路径显示的变量
+const isPathHidden = ref(false)
+
+// 新增: 检查是否是主题设置路径
+const isThemePath = computed(() => {
+    return (
+        currentPathDisplay.value.includes('系统设置 > 浅色模式') ||
+        currentPathDisplay.value.includes('系统设置 > 深色模式')
+    )
+})
+
+// 新增: 路径点击处理函数
+const handlePathClick = () => {
+    // 获取当前路径的第一部分（如果有多部分）
+    const pathParts = currentPathDisplay.value.split(' > ')
+    const parentText = pathParts[0]
+
+    // 查找对应的导航项
+    const navIndex = navItems.value.findIndex(item => item.text === parentText)
+
+    if (navIndex !== -1) {
+        // 如果只有父项
+        if (pathParts.length === 1 && navItems.value[navIndex].path) {
+            router.push(navItems.value[navIndex].path)
+        }
+        // 如果还有子项
+        else if (pathParts.length > 1) {
+            const childText = pathParts[1]
+            const childItem = navItems.value[navIndex].children?.find(
+                child => child.text === childText
+            )
+
+            if (childItem && childItem.path) {
+                router.push(childItem.path)
+            }
+        }
+    }
+}
 
 // 监听路由变化
 watch(
@@ -155,8 +215,19 @@ watch(
     }
 )
 
-// 新增: 更新路径显示的方法
+// 修改: 更新路径显示的方法
 const updateCurrentPathDisplay = (parent, child = null) => {
+    // 检查是否是主题设置
+    if (
+        parent.text === '系统设置' &&
+        child &&
+        (child.text === '浅色模式' || child.text === '深色模式')
+    ) {
+        // 可以选择不更新路径，或者设置为空
+        // 这里选择保留当前路径不变
+        return
+    }
+
     if (child) {
         currentPathDisplay.value = `${parent.text} > ${child.text}`
     } else {
@@ -237,6 +308,16 @@ const initCurrentPathDisplay = currentPath => {
                 child => child.path && currentPath.startsWith(child.path)
             )
             if (childMatch) {
+                // 检查是否是主题设置路径
+                if (
+                    parent.text === '系统设置' &&
+                    (childMatch.text === '浅色模式' ||
+                        childMatch.text === '深色模式')
+                ) {
+                    // 不更新路径
+                    return
+                }
+
                 currentPathDisplay.value = `${parent.text} > ${childMatch.text}`
                 return
             }
@@ -259,6 +340,9 @@ const isManualToggle = ref(false) // 新增手动操作标识
 const checkScreenSize = () => {
     const prevIsMobile = isMobile.value
     isMobile.value = window.innerWidth <= 800
+
+    // 新增: 检查是否需要隐藏路径
+    isPathHidden.value = window.innerWidth < 1200
 
     // 当切换到桌面端时强制关闭遮罩
     if (!isMobile.value) {
@@ -402,11 +486,7 @@ const handleChildClick = (parentIdx, childIdx, event) => {
             childIndex: childIdx
         }
 
-        // 更新路径显示
-        const parent = navItems.value[parentIdx]
-        const child = parent.children[childIdx]
-        updateCurrentPathDisplay(parent, child)
-
+        // 不更新路径显示
         return
     }
 
@@ -470,7 +550,7 @@ const applyTheme = () => {
         root.style.setProperty('--nav-top-bg', '#ffffff')
         root.style.setProperty('--nav-icon-color', '#808080')
         root.style.setProperty('--time-display-color', '#fb7299')
-        root.style.setProperty('--path-display-color', '#1890ff') // 新增路径颜色
+        root.style.setProperty('--path-display-color', '#fb7299') // 新增路径颜色
 
         // Light theme settings for home page
         root.style.setProperty('--home-bg', '#ffffff')
@@ -749,7 +829,7 @@ a.folder .el-icon {
     transition: background-color 0.3s ease;
 }
 
-/* 新增当前路径显示样式 */
+/* 修改当前路径显示样式 - 添加可点击样式 */
 .current-path {
     position: absolute;
     left: 10%;
@@ -759,6 +839,22 @@ a.folder .el-icon {
     color: var(--path-display-color);
     font-weight: 500;
     padding: 5px 12px;
+    cursor: pointer; /* 添加指针样式表明可点击 */
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.current-path:hover {
+    opacity: 0.8; /* 悬停时轻微变淡以提示可点击 */
+    text-decoration: underline; /* 添加下划线效果 */
+}
+
+/* 添加右箭头图标样式 */
+.path-arrow {
+    margin: 0 5px;
+    font-size: 14px;
+    color: var(--path-display-color);
 }
 
 .nav-top .avatar {
@@ -788,7 +884,6 @@ a.folder {
 a.folder:hover {
     background-color: var(--nav-hover);
 }
-
 /* 新增响应式样式 */
 @media screen and (max-width: 800px) {
     .nav-left {
